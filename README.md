@@ -1,6 +1,6 @@
 # easyploy
 
-Declarative deployment engine for self-hosted infrastructure. One command for provisioning, setup, deploy, and operations.
+Declarative deployment engine for self-hosted infrastructure. See **[PRD.md](./PRD.md)** for a detailed product and usage document in English. One command for provisioning, setup, deploy, and operations.
 
 - **Provider-agnostic** — SSH, Hetzner, Hostinger, etc. via plugins
 - **Tool-agnostic** — Docker Compose, Coolify, Caddy, SOPS, etc. via plugins
