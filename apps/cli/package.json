@@ -1,0 +1,44 @@
+{
+  "name": "easyploy",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "easyploy": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@easyploy/backup-walg": "workspace:*",
+    "@easyploy/config": "workspace:*",
+    "@easyploy/core": "workspace:*",
+    "@easyploy/dns-cloudflare": "workspace:*",
+    "@easyploy/dns-manual": "workspace:*",
+    "@easyploy/executor": "workspace:*",
+    "@easyploy/logger": "workspace:*",
+    "@easyploy/plugin-sdk": "workspace:*",
+    "@easyploy/proxy-caddy": "workspace:*",
+    "@easyploy/provider-hetzner": "workspace:*",
+    "@easyploy/provider-ssh": "workspace:*",
+    "@easyploy/runtime-docker-compose": "workspace:*",
+    "@easyploy/secrets-dotenv": "workspace:*",
+    "@easyploy/secrets-sops": "workspace:*",
+    "@easyploy/stack-supabase": "workspace:*",
+    "@easyploy/ui": "workspace:*",
+    "cac": "^6.7.14"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=20"
+  }
+}

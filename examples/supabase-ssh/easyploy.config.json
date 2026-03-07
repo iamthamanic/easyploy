@@ -1,0 +1,44 @@
+{
+  "project": {
+    "name": "my-supabase-app",
+    "environment": "prod"
+  },
+  "stack": {
+    "plugin": "@easyploy/stack-supabase",
+    "config": {
+      "projectUrl": "https://api.example.com"
+    }
+  },
+  "toolchain": {
+    "provisioner": {
+      "plugin": "@easyploy/provider-ssh",
+      "config": {
+        "host": "1.2.3.4",
+        "user": "root",
+        "domain": "api.example.com",
+        "sshKeyPath": "~/.ssh/id_ed25519"
+      }
+    },
+    "runtime": {
+      "plugin": "@easyploy/runtime-docker-compose",
+      "config": {}
+    },
+    "proxy": {
+      "plugin": "@easyploy/proxy-caddy",
+      "config": {}
+    },
+    "secrets": {
+      "plugin": "@easyploy/secrets-dotenv",
+      "config": {}
+    },
+    "backup": {
+      "plugin": "@easyploy/backup-walg",
+      "config": {
+        "bucket": "s3://easyploy-backups/project-a"
+      }
+    },
+    "dns": {
+      "plugin": "@easyploy/dns-manual"
+    }
+  }
+}
