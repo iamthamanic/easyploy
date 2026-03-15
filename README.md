@@ -8,8 +8,50 @@ easyploy is a declarative, plugin-based deployment CLI for self-hosted stacks. Y
 - **Tool-agnostic** — Docker Compose, Coolify, Caddy, SOPS, etc. via plugins
 - **Stack-agnostic** — Supabase, Appwrite, PocketBase, custom stacks via plugins
 
+## Features
+
+### Auto Stack Detection
+The `analyze` command automatically detects your tech stack by examining:
+- `package.json` dependencies
+- Framework-specific config files
+- Project structure
+
+**Supported stacks:** nhost, supabase, appwrite, pocketbase, nextjs, react, vue, svelte, express, fastify
+
+### Two-Mode Operation
+
+**Mode A: Existing Repository**
+```bash
+easyploy analyze [path] [--output config.json] [--dry-run]
+```
+Analyzes existing code and generates configuration automatically.
+
+**Mode B: New Project from Template**
+```bash
+easyploy templates
+easyploy init --template <name> [project-name]
+```
+Creates new project from predefined stack templates.
+
+See **[PRD.md](./PRD.md)** for detailed product documentation.
+
 ## Quick start
 
+### Modus A: Analyze existing repository (Auto-detection)
+```bash
+cd ./my-existing-project
+easyploy analyze    # Auto-detects stack and creates config
+easyploy deploy     # Deploys with detected configuration
+```
+
+### Modus B: Initialize new project from template
+```bash
+easyploy templates              # List available templates
+easyploy init --template nhost  # Create from template
+easyploy deploy
+```
+
+### Traditional workflow
 ```bash
 npm install -g easyploy
 # or
