@@ -46,8 +46,8 @@ easyploy deploy     # Deploys with detected configuration
 
 ### Modus B: Initialize new project from template ✅ Working
 ```bash
-easyploy templates              # List available templates
-easyploy init --template nhost  # Create from template
+easyploy templates                    # List available templates
+easyploy init --template supabase myapp  # Create from template
 easyploy deploy
 ```
 
