@@ -11,6 +11,7 @@ import { cmdStatus } from "./commands/status.js"
 import { cmdUpdate } from "./commands/update.js"
 import { cmdDestroy } from "./commands/destroy.js"
 import { cmdDoctor } from "./commands/doctor.js"
+import { cmdAnalyze } from "./commands/analyze.js"
 
 const argv = process.argv.slice(2)
 const showMenu = argv.length === 0
@@ -49,6 +50,10 @@ async function run(): Promise<void> {
   }
   if (cmd === "doctor") {
     await cmdDoctor(opts)
+    return
+  }
+  if (cmd === "analyze") {
+    await cmdAnalyze(opts)
     return
   }
   if (cmd === "--help" || cmd === "-h" || cmd === "--version" || cmd === "-v") {
