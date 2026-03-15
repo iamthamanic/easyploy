@@ -37,14 +37,14 @@ See **[PRD.md](./PRD.md)** for detailed product documentation.
 
 ## Quick start
 
-### Modus A: Analyze existing repository (Auto-detection)
+### Modus A: Analyze existing repository (Auto-detection) ✅ Working
 ```bash
 cd ./my-existing-project
 easyploy analyze    # Auto-detects stack and creates config
 easyploy deploy     # Deploys with detected configuration
 ```
 
-### Modus B: Initialize new project from template
+### Modus B: Initialize new project from template ✅ Working
 ```bash
 easyploy templates              # List available templates
 easyploy init --template nhost  # Create from template
