@@ -331,6 +331,135 @@ easyploy deploy
       ],
     },
     {
+      name: "convex",
+      description: "Modern app with Convex (Serverless + Realtime + TypeScript-first)",
+      technologies: ["React", "TypeScript", "Convex", "Serverless"],
+      files: [
+        {
+          path: "package.json",
+          content: JSON.stringify({
+            name: "{{PROJECT_NAME}}",
+            version: "0.1.0",
+            private: true,
+            scripts: {
+              dev: "vite",
+              build: "tsc && vite build",
+              preview: "vite preview",
+              convex: "convex dev",
+            },
+            dependencies: {
+              "convex": "^1.0.0",
+              react: "^18.2.0",
+              "react-dom": "^18.2.0",
+            },
+            devDependencies: {
+              "@types/react": "^18.2.0",
+              "@types/react-dom": "^18.2.0",
+              "@vitejs/plugin-react": "^4.0.0",
+              typescript: "^5.0.0",
+              vite: "^5.0.0",
+            },
+          }, null, 2),
+        },
+        {
+          path: "convex.json",
+          content: JSON.stringify({
+            functions: "convex/",
+          }, null, 2),
+        },
+        {
+          path: "src/main.tsx",
+          content: `import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { ConvexProvider, ConvexReactClient } from 'convex/react'
+import App from './App'
+import './index.css'
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ConvexProvider client={convex}>
+      <App />
+    </ConvexProvider>
+  </React.StrictMode>,
+)`,
+        },
+        {
+          path: "src/App.tsx",
+          content: `import { useQuery } from 'convex/react'
+import './App.css'
+
+export default function App() {
+  const tasks = useQuery(api.tasks.getAll)
+
+  return (
+    <div className="App">
+      <h1>Convex + React</h1>
+      <ul>
+        {tasks?.map((task) => (
+          <li key={task._id}>{task.text}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+`,
+        },
+        {
+          path: "convex/schema.ts",
+          content: `import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
+
+export default defineSchema({
+  tasks: defineTable({
+    text: v.string(),
+    completed: v.boolean(),
+  }),
+})
+`,
+        },
+        {
+          path: "convex/tasks.ts",
+          content: `import { query, mutation } from './_generated/server'
+
+export const getAll = query(async ({ db }) => {
+  return await db.query('tasks').collect()
+})
+
+export const create = mutation(async ({ db }, { text }: { text: string }) => {
+  await db.insert('tasks', { text, completed: false })
+})
+`,
+        },
+        {
+          path: ".env.example",
+          content: `VITE_CONVEX_URL=https://your-deployment.convex.cloud
+`,
+        },
+        {
+          path: "README.md",
+          content: `# {{PROJECT_NAME}}
+
+Created with easyploy convex template.
+
+## Setup
+
+1. Install dependencies: \`npm install\`
+2. Set up Convex: \`npx convex dev\`
+3. Copy \`.env.example\` to \`.env\` and add your Convex URL
+4. Run \`npm run dev\`
+
+## Deployment
+
+\`\`\`bash
+easyploy deploy
+\`\`\`
+`,
+        },
+      ],
+    },
+    {
       name: "pocketbase",
       description: "Lightweight app with PocketBase (SQLite + Auth + Realtime)",
       technologies: ["Svelte", "TypeScript", "PocketBase"],
