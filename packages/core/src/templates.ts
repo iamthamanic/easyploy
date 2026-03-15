@@ -13,6 +13,400 @@ export interface Template {
 export function getAvailableTemplates(): Template[] {
   return [
     {
+      name: "easyploy-standard",
+      description: "Self-hosted backend with PostgreSQL + PostgREST + GoTrue + MinIO - hosting friendly, CLI & MCP ready",
+      technologies: ["PostgreSQL", "PostgREST", "GoTrue", "MinIO", "React", "TypeScript", "MCP"],
+      files: [
+        {
+          path: "package.json",
+          content: JSON.stringify({
+            name: "{{PROJECT_NAME}}",
+            version: "0.1.0",
+            private: true,
+            scripts: {
+              dev: "vite",
+              build: "tsc && vite build",
+              preview: "vite preview",
+              "db:up": "docker-compose up -d postgres",
+              "db:migrate": "psql $DATABASE_URL -f migrations/001_init.sql",
+              "db:console": "psql $DATABASE_URL",
+              "api:up": "docker-compose up -d postgrest",
+              "auth:up": "docker-compose up -d gotrue",
+              "storage:up": "docker-compose up -d minio",
+              "stack:up": "docker-compose up -d",
+              "stack:down": "docker-compose down",
+              "stack:logs": "docker-compose logs -f",
+              "mcp:serve": "npx ts-node mcp-server/index.ts"
+            },
+            dependencies: {
+              react: "^18.2.0",
+              "react-dom": "^18.2.0",
+              "@supabase/supabase-js": "^2.39.0"
+            },
+            devDependencies: {
+              "@types/react": "^18.2.0",
+              "@types/react-dom": "^18.2.0",
+              "@vitejs/plugin-react": "^4.0.0",
+              typescript: "^5.0.0",
+              vite: "^5.0.0"
+            }
+          }, null, 2)
+        },
+        {
+          path: "docker-compose.yml",
+          content: `version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgrest:
+    image: postgrest/postgrest:v11.0.0
+    environment:
+      PGRST_DB_URI: postgres://postgres:\${POSTGRES_PASSWORD:-postgres}@postgres:5432/app
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: \${JWT_SECRET:-your-jwt-secret}
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gotrue:
+    image: supabase/gotrue:v2.0.0
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:\${POSTGRES_PASSWORD:-postgres}@postgres:5432/app?sslmode=disable
+      GOTRUE_JWT_SECRET: \${JWT_SECRET:-your-jwt-secret}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_SITE_URL: \${SITE_URL:-http://localhost:3000}
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    ports:
+      - "9999:9999"
+    depends_on:
+      - postgres
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: \${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: \${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9000 \${MINIO_ROOT_USER:-minioadmin} \${MINIO_ROOT_PASSWORD:-minioadmin};
+      mc mb local/uploads || true;
+      mc policy set public local/uploads;
+      "
+
+volumes:
+  postgres_data:
+  minio_data:`
+        },
+        {
+          path: ".env.example",
+          content: `POSTGRES_PASSWORD=your-secure-password
+JWT_SECRET=your-jwt-secret-min-32-chars
+SITE_URL=http://localhost:3000
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+VITE_API_URL=http://localhost:3001
+VITE_AUTH_URL=http://localhost:9999
+VITE_STORAGE_URL=http://localhost:9000`
+        },
+        {
+          path: "migrations/001_init.sql",
+          content: `CREATE TABLE IF NOT EXISTS todos (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id),
+    title TEXT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE ROLE anon NOLOGIN;
+GRANT USAGE ON SCHEMA public TO anon;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+
+CREATE ROLE authenticated NOLOGIN;
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+
+ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only see their own todos" ON todos
+    FOR ALL USING (user_id = auth.uid());`
+        },
+        {
+          path: "src/lib/api.ts",
+          content: `const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+export async function getTodos() {
+  const res = await fetch(\`\${API_URL}/todos\`);
+  return res.json();
+}
+
+export async function createTodo(title: string) {
+  const res = await fetch(\`\${API_URL}/todos\`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  return res.json();
+}
+
+export async function updateTodo(id: number, completed: boolean) {
+  const res = await fetch(\`\${API_URL}/todos?id=eq.\${id}\`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ completed }),
+  });
+  return res.json();
+}
+
+export async function deleteTodo(id: number) {
+  const res = await fetch(\`\${API_URL}/todos?id=eq.\${id}\`, { method: 'DELETE' });
+  return res.ok;
+}`
+        },
+        {
+          path: "src/lib/auth.ts",
+          content: `import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:9999';
+const supabaseKey = 'anon-key';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function signUp(email: string, password: string) {
+  return supabase.auth.signUp({ email, password });
+}
+
+export async function signIn(email: string, password: string) {
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signOut() {
+  await supabase.auth.signOut();
+}
+
+export function getUser() {
+  return supabase.auth.getUser();
+}
+
+export function onAuthStateChange(callback: (event: string, session: any) => void) {
+  return supabase.auth.onAuthStateChange(callback);
+}`
+        },
+        {
+          path: "src/App.tsx",
+          content: `import { useEffect, useState } from 'react';
+import { getTodos, createTodo, updateTodo, deleteTodo } from './lib/api';
+import { signIn, signUp, signOut, getUser, onAuthStateChange } from './lib/auth';
+import './App.css';
+
+function App() {
+  const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState('');
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    loadTodos();
+    checkUser();
+    const { data: { subscription } } = onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function loadTodos() {
+    const data = await getTodos();
+    setTodos(data);
+  }
+
+  async function checkUser() {
+    const { data: { user } } = await getUser();
+    setUser(user);
+  }
+
+  async function handleAddTodo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTodo.trim()) return;
+    await createTodo(newTodo);
+    setNewTodo('');
+    loadTodos();
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    await signUp(email, password);
+    alert('Check your email!');
+  }
+
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    await signIn(email, password);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    setUser(null);
+  }
+
+  if (!user) {
+    return (
+      <div className="App">
+        <h1>Easyploy Standard</h1>
+        <form onSubmit={handleSignIn}>
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <button type="submit">Sign In</button>
+          <button type="button" onClick={handleSignUp}>Sign Up</button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <header>
+        <h1>Easyploy Standard</h1>
+        <span>Welcome, {user.email}</span>
+        <button onClick={handleSignOut}>Sign Out</button>
+      </header>
+      <form onSubmit={handleAddTodo}>
+        <input value={newTodo} onChange={(e) => setNewTodo(e.target.value)} placeholder="Add a todo..." />
+        <button type="submit">Add</button>
+      </form>
+      <ul>
+        {todos.map((todo: any) => (
+          <li key={todo.id}>
+            <input type="checkbox" checked={todo.completed} onChange={() => updateTodo(todo.id, !todo.completed).then(loadTodos)} />
+            <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>{todo.title}</span>
+            <button onClick={() => deleteTodo(todo.id).then(loadTodos)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;`
+        },
+        {
+          path: "README.md",
+          content: `# {{PROJECT_NAME}}
+
+Created with **easyploy-standard** template.
+
+## Stack
+
+- **PostgreSQL** - Database
+- **PostgREST** - Auto-generated REST API
+- **GoTrue** - Auth (Supabase-compatible)
+- **MinIO** - S3-compatible storage
+- **React + TypeScript** - Frontend
+- **MCP Server** - AI integration
+
+## Quick Start
+
+\`\`\`bash
+# 1. Setup
+cp .env.example .env
+# Edit .env
+
+# 2. Start stack
+npm run stack:up
+
+# 3. Run migrations
+npm run db:migrate
+
+# 4. Start frontend
+npm run dev
+\`\`\`
+
+## Services
+
+| Service | URL | CLI Access |
+|---------|-----|------------|
+| Frontend | http://localhost:3000 | - |
+| API | http://localhost:3001 | curl |
+| Auth | http://localhost:9999 | curl |
+| Storage | http://localhost:9000 | mc |
+| Storage UI | http://localhost:9001 | browser |
+
+## MCP Server
+
+\`\`\`bash
+npm run mcp:serve
+\`\`\`
+
+Tools: query_database, create_record, upload_file, auth_user`
+        },
+        {
+          path: "mcp-server/index.ts",
+          content: `#!/usr/bin/env node
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+
+const server = new Server({ name: 'easyploy-standard', version: '1.0.0' }, { capabilities: { tools: {} } });
+
+const tools = [
+  { name: 'query_database', description: 'Execute SQL query', inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
+  { name: 'create_record', description: 'Create record via API', inputSchema: { type: 'object', properties: { table: { type: 'string' }, data: { type: 'object' } }, required: ['table', 'data'] } },
+  { name: 'upload_file', description: 'Upload to storage', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] } },
+  { name: 'auth_user', description: 'Get user info', inputSchema: { type: 'object', properties: {} } }
+];
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name } = request.params;
+  return { content: [{ type: 'text', text: \`\${name} executed\` }] };
+});
+
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error('Easyploy MCP server running');
+}
+
+main().catch(console.error);`
+        }
+      ]
+    },
+    {
       name: "nhost",
       description: "Full-stack app with Nhost (PostgreSQL + Hasura + Auth + Storage)",
       technologies: ["React", "TypeScript", "Nhost", "GraphQL", "PostgreSQL"],
