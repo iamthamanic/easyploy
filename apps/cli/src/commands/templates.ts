@@ -28,7 +28,8 @@ export async function cmdTemplates(): Promise<void> {
 
 export async function cmdInitTemplate(opts: Record<string, unknown>): Promise<void> {
   const templateName = opts.template as string;
-  const projectName = (opts.project as string) || (opts._ as string[])?.[0];
+  const positional = (opts._ as string[]) || [];
+  const projectName = (opts.project as string) || positional[0];
   
   if (!templateName) {
     console.error("❌ Fehler: --template ist erforderlich");

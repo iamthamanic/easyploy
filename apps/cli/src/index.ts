@@ -25,6 +25,12 @@ async function run(): Promise<void> {
   const cmd = argv[0]
   const rest = argv.slice(1)
   const opts = parseOpts(rest)
+  
+  // Check for init --template first (before regular init)
+  if (cmd === "init" && opts.template) {
+    await cmdInitTemplate(opts)
+    return
+  }
   if (cmd === "init") {
     await cmdInit(opts)
     return
@@ -61,21 +67,19 @@ async function run(): Promise<void> {
     await cmdTemplates()
     return
   }
-  if (cmd === "init" && opts.template) {
-    await cmdInitTemplate(opts)
-    return
-  }
   if (cmd === "--help" || cmd === "-h" || cmd === "--version" || cmd === "-v") {
     const cli = createCLI()
     cli.parse(argv)
     return
   }
   const cli = createCLI()
-  cli.parse(argv)
+    cli.parse(argv)
 }
 
 function parseOpts(args: string[]): Record<string, unknown> {
   const opts: Record<string, unknown> = {}
+  const positional: string[] = []
+  
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--config" && args[i + 1]) {
       opts.config = args[++i]
@@ -87,8 +91,21 @@ function parseOpts(args: string[]): Record<string, unknown> {
       opts.nonInteractive = true
     } else if (args[i] === "--force") {
       opts.force = true
+    } else if (args[i] === "--template" && args[i + 1]) {
+      opts.template = args[++i]
+    } else if (args[i] === "--output" && args[i + 1]) {
+      opts.output = args[++i]
+    } else if (args[i] === "--path" && args[i + 1]) {
+      opts.path = args[++i]
+    } else {
+      const arg = args[i]
+      if (arg && !arg.startsWith("--")) {
+        positional.push(arg)
+      }
     }
   }
+  
+  opts._ = positional
   return opts
 }
 
