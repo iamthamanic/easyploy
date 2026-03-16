@@ -1,0 +1,33 @@
+{
+  "name": "@easyploy/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP (Model Context Protocol) Server for easyploy - AI-powered deployment automation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@easyploy/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vitest": "^1.0.0",
+    "eslint": "^8"
+  },
+  "keywords": ["mcp", "ai", "deployment", "easyploy"],
+  "license": "MIT"
+}
