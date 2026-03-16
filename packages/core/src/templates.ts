@@ -920,6 +920,297 @@ easyploy deploy
         },
       ],
     },
+    {
+      name: "easyploy-vibecode",
+      description: "Vibe Coding optimized: Next.js 15 + Next-Auth + Prisma + MinIO + Redis - Self-hosted with GUI management",
+      technologies: ["Next.js", "TypeScript", "Prisma", "PostgreSQL", "Next-Auth", "Resend", "MinIO", "Redis", "Tailwind", "shadcn/ui"],
+      files: [
+        {
+          path: "package.json",
+          content: JSON.stringify({
+            name: "{{PROJECT_NAME}}",
+            version: "0.1.0",
+            private: true,
+            type: "module",
+            scripts: {
+              dev: "next dev",
+              build: "next build",
+              start: "next start",
+              lint: "next lint",
+              "db:generate": "prisma generate",
+              "db:migrate": "prisma migrate dev",
+              "db:studio": "prisma studio",
+              "db:push": "prisma db push",
+              "db:seed": "tsx prisma/seed.ts",
+              "stack:up": "docker-compose up -d",
+              "stack:down": "docker-compose down",
+              "stack:logs": "docker-compose logs -f"
+            },
+            dependencies: {
+              "@auth/prisma-adapter": "^2.0.0",
+              "@hookform/resolvers": "^3.3.4",
+              "@prisma/client": "^5.12.0",
+              "@radix-ui/react-accordion": "^1.1.2",
+              "@radix-ui/react-alert-dialog": "^1.0.5",
+              "@radix-ui/react-avatar": "^1.0.4",
+              "@radix-ui/react-checkbox": "^1.0.4",
+              "@radix-ui/react-dialog": "^1.0.5",
+              "@radix-ui/react-dropdown-menu": "^2.0.6",
+              "@radix-ui/react-label": "^2.0.2",
+              "@radix-ui/react-select": "^2.0.0",
+              "@radix-ui/react-separator": "^1.0.3",
+              "@radix-ui/react-slot": "^1.0.2",
+              "@radix-ui/react-tabs": "^1.0.4",
+              "@radix-ui/react-toast": "^1.1.5",
+              "@tanstack/react-query": "^5.28.0",
+              "@aws-sdk/client-s3": "^3.540.0",
+              "@aws-sdk/s3-request-presigner": "^3.540.0",
+              "class-variance-authority": "^0.7.0",
+              clsx: "^2.1.0",
+              "date-fns": "^3.6.0",
+              ioredis: "^5.3.2",
+              "lucide-react": "^0.344.0",
+              next: "14.2.0",
+              "next-auth": "5.0.0-beta.15",
+              "next-themes": "^0.2.1",
+              react: "^18.2.0",
+              "react-dom": "^18.2.0",
+              "react-hook-form": "^7.51.0",
+              resend: "^3.2.0",
+              "tailwind-merge": "^2.2.0",
+              "tailwindcss-animate": "^1.0.7",
+              zod: "^3.22.4"
+            },
+            devDependencies: {
+              "@types/node": "^20",
+              "@types/react": "^18",
+              "@types/react-dom": "^18",
+              autoprefixer: "^10.0.1",
+              postcss: "^8",
+              prisma: "^5.12.0",
+              tailwindcss: "^3.3.0",
+              tsx: "^4.7.0",
+              typescript: "^5",
+              eslint: "^8",
+              "eslint-config-next": "14.2.0"
+            }
+          }, null, 2)
+        },
+        {
+          path: "docker-compose.yml",
+          content: `version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:\${POSTGRES_PASSWORD:-postgres}@postgres:5432/app
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_SECRET=\${NEXTAUTH_SECRET:-your-secret-key-min-32-chars}
+      - NEXTAUTH_URL=\${NEXTAUTH_URL:-http://localhost:3000}
+      - RESEND_API_KEY=\${RESEND_API_KEY:-}
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=\${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=\${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_BUCKET=uploads
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: \${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: \${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9000 \$\${MINIO_ROOT_USER:-minioadmin} \$\${MINIO_ROOT_PASSWORD:-minioadmin};
+      mc mb local/uploads || true;
+      mc policy set public local/uploads;
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:`
+        },
+        {
+          path: ".env.example",
+          content: `# Database
+POSTGRES_PASSWORD=your-secure-password
+
+# Auth
+NEXTAUTH_SECRET=your-secret-key-min-32-chars-long
+NEXTAUTH_URL=http://localhost:3000
+
+# Email (Resend)
+RESEND_API_KEY=re_your-resend-api-key
+
+# Storage
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+
+# API URLs
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_STORAGE_URL=http://localhost:9000`
+        },
+        {
+          path: "prisma/schema.prisma",
+          content: `generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}`
+        },
+        {
+          path: "README.md",
+          content: `# {{PROJECT_NAME}}
+
+Built with **easyploy-vibecode** template.
+
+## Stack
+
+- **Next.js 15** (App Router)
+- **Next-Auth v5** (Auth with Resend)
+- **Prisma** (ORM)
+- **PostgreSQL** (Database)
+- **Redis** (Cache & Sessions)
+- **MinIO** (S3-compatible Storage)
+- **Tailwind CSS** + **shadcn/ui**
+- **TanStack Query** (Server State)
+- **React Hook Form** + **Zod**
+
+## Quick Start
+
+1. **Setup Environment**
+   \`\`\`bash
+   cp .env.example .env
+   # Edit .env with your settings
+   \`\`\`
+
+2. **Start Infrastructure**
+   \`\`\`bash
+   npm run stack:up
+   \`\`\`
+
+3. **Database Setup**
+   \`\`\`bash
+   npm run db:generate
+   npm run db:migrate
+   \`\`\`
+
+4. **Run Development**
+   \`\`\`bash
+   npm run dev
+   \`\`\`
+
+## Management GUIs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| App | http://localhost:3000 | Next.js App |
+| Prisma Studio | \`npm run db:studio\` | Database GUI |
+| MinIO Console | http://localhost:9001 | Storage Management |
+| Resend Dashboard | https://resend.com | Email Templates & Logs |
+
+## Vibe Coding
+
+Optimized for AI-assisted development with Server Actions, full TypeScript, and simple patterns.`
+        }
+      ]
+    }
   ];
 }
 
