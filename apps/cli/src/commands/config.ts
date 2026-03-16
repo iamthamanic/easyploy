@@ -141,16 +141,18 @@ function convertToCoolify(compose: DockerCompose): CoolifyConfig {
           
           // Check if it's a variable reference like ${VAR:-default}
           if (value.includes("${") && value.includes("}")) {
-            // Extract default value or use placeholder
-            const match = value.match(/\$\{([^}]+)\}/)
-            if (match) {
+            // Replace all ${VAR:-default} occurrences in the string
+            let processedValue = value
+            const varRegex = /\$\{([^}]+)\}/g
+            let match
+            while ((match = varRegex.exec(value)) !== null) {
               const varExpr = match[1]
               const [varName, defaultValue] = varExpr.split(":-")
-              coolifyService.environment![key] = defaultValue || ""
-              globalEnv[varName] = defaultValue || ""
-            } else {
-              coolifyService.environment![key] = value
+              const replacement = defaultValue || ""
+              processedValue = processedValue.replace(match[0], replacement)
+              if (varName) globalEnv[varName] = replacement
             }
+            coolifyService.environment![key] = processedValue
           } else {
             coolifyService.environment![key] = value
           }
@@ -159,15 +161,18 @@ function convertToCoolify(compose: DockerCompose): CoolifyConfig {
         // Object format: { KEY: "value" }
         for (const [key, value] of Object.entries(service.environment)) {
           if (typeof value === "string" && value.includes("${") && value.includes("}")) {
-            const match = value.match(/\$\{([^}]+)\}/)
-            if (match) {
+            // Replace all ${VAR:-default} occurrences in the string
+            let processedValue = value
+            const varRegex = /\$\{([^}]+)\}/g
+            let match
+            while ((match = varRegex.exec(value)) !== null) {
               const varExpr = match[1]
               const [varName, defaultValue] = varExpr.split(":-")
-              coolifyService.environment![key] = defaultValue || ""
-              globalEnv[varName] = defaultValue || ""
-            } else {
-              coolifyService.environment![key] = value
+              const replacement = defaultValue || ""
+              processedValue = processedValue.replace(match[0], replacement)
+              if (varName) globalEnv[varName] = replacement
             }
+            coolifyService.environment![key] = processedValue
           } else {
             coolifyService.environment![key] = String(value)
           }
