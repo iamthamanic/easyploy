@@ -30,7 +30,8 @@
     "@easyploy/secrets-sops": "workspace:*",
     "@easyploy/stack-supabase": "workspace:*",
     "@easyploy/ui": "workspace:*",
-    "cac": "^6.7.14"
+    "cac": "^6.7.14",
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

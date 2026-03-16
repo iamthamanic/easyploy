@@ -13,6 +13,7 @@ import { cmdDestroy } from "./commands/destroy.js"
 import { cmdDoctor } from "./commands/doctor.js"
 import { cmdAnalyze } from "./commands/analyze.js"
 import { cmdTemplates, cmdInitTemplate } from "./commands/templates.js"
+import { cmdConfig } from "./commands/config.js"
 
 const argv = process.argv.slice(2)
 const showMenu = argv.length === 0
@@ -65,6 +66,10 @@ async function run(): Promise<void> {
   }
   if (cmd === "templates") {
     await cmdTemplates()
+    return
+  }
+  if (cmd === "config") {
+    await cmdConfig(opts)
     return
   }
   if (cmd === "--help" || cmd === "-h" || cmd === "--version" || cmd === "-v") {
