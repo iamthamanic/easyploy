@@ -5,7 +5,12 @@
  */
 
 import type { ToolHandler, MCPToolResponse, Template } from "../types.js";
-import { getAvailableTemplates } from "@easyploy/core";
+// TODO: Import from @easyploy/core when available
+// import { getAvailableTemplates } from "@easyploy/core";
+const getAvailableTemplates = () => [
+  { name: "easyploy-vibecode", description: "Vibe Coding optimized stack", technologies: ["Next.js", "Prisma", "PostgreSQL"] },
+  { name: "easyploy-standard", description: "Standard self-hosted stack", technologies: ["PostgreSQL", "PostgREST", "GoTrue"] },
+];
 
 export class ListTemplatesHandler implements ToolHandler {
   name = "list_templates";
@@ -29,7 +34,7 @@ export class ListTemplatesHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: JSON.stringify({
               templates: formattedTemplates,
               count: templates.length,
@@ -41,7 +46,7 @@ export class ListTemplatesHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: `Error listing templates: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],

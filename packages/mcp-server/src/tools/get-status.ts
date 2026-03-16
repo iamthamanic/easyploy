@@ -35,7 +35,7 @@ export class GetStatusHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: JSON.stringify({
               projectPath: targetPath,
               status: "unknown",
@@ -53,7 +53,7 @@ export class GetStatusHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: `Error getting status: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],

@@ -24,17 +24,10 @@ export class EasyployMCPServer {
     this.tools = new Map();
     this.registerTools();
     
-    this.server = new Server(
-      {
-        name: "easyploy-mcp-server",
-        version: "0.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
-    );
+    this.server = new Server({
+      name: "easyploy-mcp-server",
+      version: "0.1.0",
+    });
 
     this.setupHandlers();
   }
@@ -80,7 +73,7 @@ export class EasyployMCPServer {
         return {
           content: [
             {
-              type: "text",
+              type: "text" as const,
               text: `Unknown tool: ${name}`,
             },
           ],
@@ -88,7 +81,8 @@ export class EasyployMCPServer {
         };
       }
 
-      return await handler.execute(args);
+      const result = await handler.execute(args);
+      return result;
     });
   }
 

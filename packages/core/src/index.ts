@@ -12,3 +12,7 @@ export * from "./validation.js"
 export * from "./engine/index.js"
 export * from "./detector.js"
 export * from "./templates.js"
+
+// Providers
+export * from "./providers/types.js"
+export { SSHProvider } from "./providers/ssh.js"

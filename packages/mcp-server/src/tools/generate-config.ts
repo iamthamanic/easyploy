@@ -41,7 +41,7 @@ export class GenerateConfigHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: JSON.stringify({
               success: true,
               message: `Configuration generated for ${format}`,
@@ -56,7 +56,7 @@ export class GenerateConfigHandler implements ToolHandler {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: `Error generating config: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],

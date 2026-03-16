@@ -12,10 +12,13 @@ export interface MCPTool {
 
 export interface MCPToolResponse {
   content: Array<{
-    type: string;
-    text: string;
+    type: "text" | "image" | "resource";
+    text?: string;
+    data?: string;
+    mimeType?: string;
   }>;
   isError?: boolean;
+  _meta?: Record<string, unknown>;
 }
 
 export interface Template {
